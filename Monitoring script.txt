@@ -1,0 +1,41 @@
+#!/bin/bash
+# Simple System Monitoring Script
+
+# Thresholds
+CPU_THRESHOLD=80
+RAM_THRESHOLD=80
+DISK_THRESHOLD=80
+
+# Log file
+LOGFILE="/home/tushar/Projects/system_monitor.log"
+
+# Function to log data
+log_data() {
+    echo "[$(date)] $1" >> "$LOGFILE"
+}
+
+# CPU Usage
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8}')
+CPU_USAGE=${CPU_USAGE%.*}
+if [ "$CPU_USAGE" -ge "$CPU_THRESHOLD" ]; then
+    log_data "High CPU Usage: $CPU_USAGE%"
+    # echo "High CPU: $CPU_USAGE%" | mail -s "CPU Alert" admin@example.com
+fi
+
+# RAM Usage
+RAM_USAGE=$(free | grep Mem | awk '{print $3/$2 * 100.0}')
+RAM_USAGE=${RAM_USAGE%.*}
+if [ "$RAM_USAGE" -ge "$RAM_THRESHOLD" ]; then
+    log_data "High RAM Usage: $RAM_USAGE%"
+fi
+# Disk Usage
+DISK_USAGE=$(df / | grep / | awk '{print $5}' | sed 's/%//g')
+if [ "$DISK_USAGE" -ge "$DISK_THRESHOLD" ]; then
+    log_data "High Disk Usage: $DISK_USAGE%"
+fi
+
+# Network Check (ping to Google)
+ping -c 2 8.8.8.8 > /dev/null
+if [ $? -ne 0 ]; then
+    log_data "Network Issue: Unable to reach Internet"
+fi
